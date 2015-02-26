@@ -100,9 +100,9 @@ void _signal_emit(const GValue *inst_and_params, guint id, GQuark detail,
 import "C"
 
 import (
+	"fmt"
 	"reflect"
 	"unsafe"
-	"fmt"
 )
 
 type ObjectCaster interface {
@@ -162,10 +162,11 @@ func (o *Object) SetProperty(name string, val interface{}) {
 		ValueOf(val).g())
 }
 
-func (o *Object) GetProperty(name string) interface{} {
+func (o *Object) GetProperty(name string, t Type) interface{} {
 	s := C.CString(name)
 	defer C.free(unsafe.Pointer(s))
 	v := new(Value)
+	v.Init(t)
 	C.g_object_get_property(o.g(), (*C.gchar)(s), v.g())
 	return v.Get()
 }
@@ -368,7 +369,7 @@ func objectMarshal(mp *C.MarshalParams) {
 	n_param := int(mp.n_param)
 	first_param := 0
 	if gc.no_inst != 0 {
-		// Callback without instance on which signal was emited as first param 
+		// Callback without instance on which signal was emited as first param
 		first_param++
 	}
 	prms := (*[1 << 16]Value)(unsafe.Pointer(mp.params))[:n_param]
